@@ -38,6 +38,23 @@ do
     if [[ $GUESS -eq $SECRET_NUMBER ]]
     then
       echo "You guessed it in $GUESS_COUNT tries. The secret number was $SECRET_NUMBER. Nice job!"
+
+      # Update games played and best game if applicable
+      if [[ -z $USER_INFO ]]
+      then
+        $PSQL "UPDATE users SET games_played=1, best_game=$GUESS_COUNT WHERE username='$USERNAME'"
+      else
+        echo "$USER_INFO" | while IFS='|' read GAMES_PLAYED BEST_GAME
+        do
+          UPDATED_GAMES_PLAYED=$((GAMES_PLAYED + 1))
+          if [[ $GUESS_COUNT -lt $BEST_GAME ]]
+          then
+            $PSQL "UPDATE users SET games_played=$UPDATED_GAMES_PLAYED, best_game=$GUESS_COUNT WHERE username='$USERNAME'"
+          else
+            $PSQL "UPDATE users SET games_played=$UPDATED_GAMES_PLAYED WHERE username='$USERNAME'"
+          fi
+        done
+      fi
       break
     elif [[ $GUESS -gt $SECRET_NUMBER ]]
     then
