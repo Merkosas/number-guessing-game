@@ -17,10 +17,9 @@ then
   echo "Welcome, $USERNAME! It looks like this is your first time here."
   $PSQL "INSERT INTO users(username) VALUES('$USERNAME')"
 else
-  echo "$USER_INFO" | while IFS='|' read GAMES_PLAYED BEST_GAME
-  do
-    echo "Welcome back, $USERNAME! You have played $GAMES_PLAYED games, and your best game took $BEST_GAME guesses."
-  done
+  # Extract games_played and best_game from the user info
+  IFS='|' read GAMES_PLAYED BEST_GAME <<< "$USER_INFO"
+  echo "Welcome back, $USERNAME! You have played $GAMES_PLAYED games, and your best game took $BEST_GAME guesses."
 fi
 
 echo "Guess the secret number between 1 and 1000:"
@@ -44,16 +43,14 @@ do
       then
         $PSQL "UPDATE users SET games_played=1, best_game=$GUESS_COUNT WHERE username='$USERNAME'"
       else
-        echo "$USER_INFO" | while IFS='|' read GAMES_PLAYED BEST_GAME
-        do
-          UPDATED_GAMES_PLAYED=$((GAMES_PLAYED + 1))
-          if [[ $GUESS_COUNT -lt $BEST_GAME ]]
-          then
-            $PSQL "UPDATE users SET games_played=$UPDATED_GAMES_PLAYED, best_game=$GUESS_COUNT WHERE username='$USERNAME'"
-          else
-            $PSQL "UPDATE users SET games_played=$UPDATED_GAMES_PLAYED WHERE username='$USERNAME'"
-          fi
-        done
+        # Increment the number of games played
+        UPDATED_GAMES_PLAYED=$((GAMES_PLAYED + 1))
+        if [[ $GUESS_COUNT -lt $BEST_GAME ]]
+        then
+          $PSQL "UPDATE users SET games_played=$UPDATED_GAMES_PLAYED, best_game=$GUESS_COUNT WHERE username='$USERNAME'"
+        else
+          $PSQL "UPDATE users SET games_played=$UPDATED_GAMES_PLAYED WHERE username='$USERNAME'"
+        fi
       fi
       break
     elif [[ $GUESS -gt $SECRET_NUMBER ]]
